@@ -1,4 +1,4 @@
-/* Version: #16 */
+/* Version: #17 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
@@ -7,7 +7,7 @@ const AppState = {
     // Editor Data
     selectedAsset: null, 
     loadedImage: null,
-    animations: {},      // Now: { "Idle": { fps:8, frames:[...] } }
+    animations: {},      
     currentAnimName: "Idle", 
     
     // Selection & Interaction
@@ -27,7 +27,7 @@ const AppState = {
         bgColor: '#222222', activeTool: 'select'
     },
 
-    // Preview State (NYTT)
+    // Preview State
     preview: {
         active: false,
         lastTime: 0,
@@ -60,7 +60,7 @@ const ui = {
     fileInput: document.getElementById('asset-file-input'),
     saveBtn: document.getElementById('save-btn'),
     
-    // Preview Modal (NYTT)
+    // Preview Modal
     previewModal: document.getElementById('preview-modal'),
     previewCanvas: document.getElementById('preview-canvas'),
     closePreviewBtn: document.getElementById('close-preview-btn'),
@@ -99,12 +99,12 @@ function setupEventListeners() {
     ui.uploadBtn.onclick = () => ui.fileInput.click(); 
     ui.fileInput.onchange = handleFileUpload;
 
-    // Preview (NYTT)
+    // Preview
     ui.closePreviewBtn.onclick = closePreview;
     ui.fpsSlider.oninput = (e) => {
         const fps = parseInt(e.target.value);
         ui.fpsDisplay.innerText = fps;
-        getCurrentAnimData().fps = fps; // Update state
+        getCurrentAnimData().fps = fps;
     };
 
     // Viewport
@@ -138,7 +138,18 @@ function toggleSidebar() {
     setTimeout(drawCanvas, 300); 
 }
 
-// === PREVIEW LOGIC (NYTT) ===
+function transitionToEditor() {
+    ui.loginScreen.classList.add('hidden');
+    ui.editorScreen.classList.remove('hidden');
+    if(AppState.user) ui.projectName.innerText = AppState.user.email;
+}
+
+function transitionToLogin() {
+    ui.editorScreen.classList.add('hidden');
+    ui.loginScreen.classList.remove('hidden');
+}
+
+// === PREVIEW LOGIC ===
 window.openPreview = () => {
     const frames = getCurrentFrames();
     if (frames.length === 0) return alert("Ingen frames å spille av. Tegn noen bokser først!");
@@ -149,7 +160,6 @@ window.openPreview = () => {
     AppState.preview.accumulatedTime = 0;
     AppState.preview.lastTime = performance.now();
     
-    // Set Slider to current FPS
     const fps = getCurrentAnimData().fps || 8;
     ui.fpsSlider.value = fps;
     ui.fpsDisplay.innerText = fps;
@@ -170,25 +180,22 @@ function animatePreview(timestamp) {
     const fps = animData.fps || 8;
     const interval = 1000 / fps;
     
-    // Calculate delta time
     const dt = timestamp - AppState.preview.lastTime;
     AppState.preview.lastTime = timestamp;
     AppState.preview.accumulatedTime += dt;
     
-    // Next frame logic
     if (AppState.preview.accumulatedTime >= interval) {
         AppState.preview.frameIndex = (AppState.preview.frameIndex + 1) % frames.length;
-        AppState.preview.accumulatedTime -= interval; // Keep remainder for smooth loop
+        AppState.preview.accumulatedTime -= interval; 
     }
     
-    // Draw
     const ctx = ui.previewCanvas.getContext('2d');
     const w = ui.previewCanvas.width;
     const h = ui.previewCanvas.height;
     
     ctx.clearRect(0, 0, w, h);
     
-    // Draw center lines (visual aid)
+    // Crosshair
     ctx.strokeStyle = "rgba(255,255,255,0.1)";
     ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
@@ -197,24 +204,19 @@ function animatePreview(timestamp) {
     const img = AppState.loadedImage;
     
     if (frame && img) {
-        // Source rect (from sprite sheet)
         const sx = frame.x;
         const sy = frame.y;
         const sw = frame.w;
         const sh = frame.h;
         
-        // Destination (centered based on Anchor)
-        // Anchor is relative to Frame Top-Left. 
-        // We want Anchor to be at Canvas Center (w/2, h/2).
         const anchorX = frame.anchor ? frame.anchor.x : sw/2;
-        const anchorY = frame.anchor ? frame.anchor.y : sh; // Default bottom
+        const anchorY = frame.anchor ? frame.anchor.y : sh;
         
         const dx = (w / 2) - anchorX;
         const dy = (h / 2) - anchorY;
         
         ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
         
-        // Draw frame number
         ctx.fillStyle = "white";
         ctx.font = "10px Arial";
         ctx.fillText(`Frame: ${AppState.preview.frameIndex + 1}/${frames.length}`, 5, 15);
@@ -223,9 +225,7 @@ function animatePreview(timestamp) {
     requestAnimationFrame(animatePreview);
 }
 
-// === DATA MANAGEMENT (Frames/FPS) ===
-
-// Helper to get the FULL object {fps, frames}
+// === DATA MANAGEMENT ===
 function getCurrentAnimData() {
     if (!AppState.animations[AppState.currentAnimName]) {
         AppState.animations[AppState.currentAnimName] = { fps: 8, frames: [] };
@@ -233,7 +233,6 @@ function getCurrentAnimData() {
     return AppState.animations[AppState.currentAnimName];
 }
 
-// Helper to get just the array (for backward compatibility in drawing logic)
 function getCurrentFrames() {
     return getCurrentAnimData().frames;
 }
@@ -266,15 +265,12 @@ function selectAsset(assetData, docId, li) {
     
     AppState.selectedAsset = { id: docId, data: assetData };
     
-    // MIGRATION LOGIC: Convert old Arrays to Objects if necessary
     let rawAnims = assetData.animations || {};
     AppState.animations = {};
     
-    // Ensure defaults exist
     DEFAULT_ANIMS.forEach(name => {
         if (rawAnims[name]) {
             if (Array.isArray(rawAnims[name])) {
-                console.log(`Migrating '${name}' to new format...`);
                 AppState.animations[name] = { fps: 8, frames: rawAnims[name] };
             } else {
                 AppState.animations[name] = rawAnims[name];
@@ -304,7 +300,7 @@ function updateInspector() {
         return;
     }
     const animName = AppState.currentAnimName;
-    const frames = getCurrentFrames(); // Uses new helper
+    const frames = getCurrentFrames();
     
     let animOptions = "";
     Object.keys(AppState.animations).forEach(k => {
@@ -360,7 +356,7 @@ window.deleteAsset = async (docId, fileUrl, event) => {
     } catch(e){console.error(e);}
 };
 
-// === CANVAS DRAWING (Resten er stort sett uendret) ===
+// === CANVAS DRAWING ===
 function initCanvas() {
     if(!ui.canvas) return;
     ui.canvas.addEventListener('mousedown', (e) => {
@@ -379,7 +375,6 @@ function initCanvas() {
             if (dist(mouse.x, mouse.y, anchorScreen.x, anchorScreen.y) < 10) {
                 AppState.mode = 'dragging_anchor'; AppState.dragStart = imgCoords;
                 AppState.initialFrame = JSON.parse(JSON.stringify(frame)); 
-                // Ensure anchor exists
                 if(!AppState.initialFrame.anchor) AppState.initialFrame.anchor = {x:frame.w/2, y:frame.h};
                 return;
             }
@@ -425,9 +420,7 @@ function initCanvas() {
         }
         else if (AppState.mode === 'dragging_anchor') {
             const f = getCurrentFrames()[AppState.selectedFrameIndex];
-            // Initialize anchor if missing
             if(!f.anchor) f.anchor = {x: f.w/2, y: f.h}; 
-            
             f.anchor.x = AppState.initialFrame.anchor.x + (imgCoords.x - AppState.dragStart.x);
             f.anchor.y = AppState.initialFrame.anchor.y + (imgCoords.y - AppState.dragStart.y);
             drawCanvas();
@@ -457,7 +450,7 @@ function initCanvas() {
             if(s.w<0){s.x+=s.w; s.w=Math.abs(s.w);} if(s.h<0){s.y+=s.h; s.h=Math.abs(s.h);}
             if(s.w>2 && s.h>2) {
                 const list = getCurrentFrames();
-                list.push({x:s.x, y:s.y, w:s.w, h:s.h, anchor:{x:s.w/2, y:s.h}}); // Default Anchor bottom center
+                list.push({x:s.x, y:s.y, w:s.w, h:s.h, anchor:{x:s.w/2, y:s.h}});
                 AppState.selectedFrameIndex = list.length-1;
                 updateInspector();
             }
@@ -478,11 +471,8 @@ function drawCanvas() {
     const frames = getCurrentFrames();
     frames.forEach((f, i) => {
         const isSel = i === AppState.selectedFrameIndex; ctx.strokeStyle = isSel ? "#ffff00" : "#4cd137"; ctx.lineWidth = (isSel ? 2 : 1) / AppState.viewport.zoom; ctx.strokeRect(x+f.x, y+f.y, f.w, f.h);
-        
-        // Safe access anchor
         const ax = x + f.x + (f.anchor ? f.anchor.x : f.w/2);
         const ay = y + f.y + (f.anchor ? f.anchor.y : f.h);
-        
         const s = 5/AppState.viewport.zoom; ctx.strokeStyle="#00ffff"; ctx.beginPath(); ctx.moveTo(ax-s, ay); ctx.lineTo(ax+s, ay); ctx.moveTo(ax, ay-s); ctx.lineTo(ax, ay+s); ctx.stroke();
         if(isSel){ ctx.fillStyle="#fff"; const hs=4/AppState.viewport.zoom; [[x+f.x, y+f.y], [x+f.x+f.w, y+f.y], [x+f.x, y+f.y+f.h], [x+f.x+f.w, y+f.y+f.h]].forEach(c=>ctx.fillRect(c[0]-hs, c[1]-hs, hs*2, hs*2)); }
         ctx.fillStyle = isSel ? "#ffff00" : "#4cd137"; ctx.font=`${10/AppState.viewport.zoom}px Arial`; ctx.fillText("#"+(i+1), x+f.x, y+f.y - 3/AppState.viewport.zoom);
@@ -500,7 +490,24 @@ function getFrameAt(ix,iy){const fs=getCurrentFrames();for(let i=fs.length-1;i>=
 function getResizeHandleHover(mx,my,f){const z=AppState.viewport.zoom,m=8;const tl=imageToScreenCoords(f.x,f.y),tr=imageToScreenCoords(f.x+f.w,f.y),bl=imageToScreenCoords(f.x,f.y+f.h),br=imageToScreenCoords(f.x+f.w,f.y+f.h);if(dist(mx,my,tl.x,tl.y)<m)return'nw';if(dist(mx,my,tr.x,tr.y)<m)return'ne';if(dist(mx,my,bl.x,bl.y)<m)return'sw';if(dist(mx,my,br.x,br.y)<m)return'se';return null;}
 function setTool(t){AppState.viewport.activeTool=t;if(t==='select'){ui.toolSelect.classList.add('active');ui.toolPan.classList.remove('active');ui.canvas.style.cursor="default";}else{ui.toolSelect.classList.remove('active');ui.toolPan.classList.add('active');ui.canvas.style.cursor="grab";}}
 function handleZoom(a){let z=AppState.viewport.zoom+a;z=Math.max(0.1,Math.min(z,10.0));AppState.viewport.zoom=Math.round(z*10)/10;ui.zoomLabel.innerText=Math.round(z*100)+"%";drawCanvas();}
-function initAuthListener(){auth.onAuthStateChanged(u=>{if(u){AppState.user=u;ui.statusMsg.innerText="Klar";setTimeout(()=>{toggleSidebar();subscribeToAssets(u.uid);},500);}else{AppState.user=null;transitionToLogin();}});}
+
+// Auth Init (Viktig!)
+function initAuthListener(){
+    auth.onAuthStateChanged(u=>{
+        if(u){
+            AppState.user=u;
+            ui.statusMsg.innerText="Klar";
+            // VIKTIG: Kalle transitionToEditor HER
+            setTimeout(()=>{
+                transitionToEditor();
+                subscribeToAssets(u.uid);
+            },500);
+        }else{
+            AppState.user=null;
+            transitionToLogin();
+        }
+    });
+}
 function handleLogin(){const e=ui.emailInput.value,p=ui.passwordInput.value;auth.signInWithEmailAndPassword(e,p).catch(err=>showStatus(err.code,"error"));}
 function handleRegister(){const e=ui.emailInput.value,p=ui.passwordInput.value;auth.createUserWithEmailAndPassword(e,p).then(()=>showStatus("OK","success")).catch(err=>showStatus(err.code,"error"));}
 function handleGoogleLogin(){auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err=>console.error(err));}
@@ -509,6 +516,5 @@ async function handleFileUpload(ev){const f=ev.target.files[0];if(!f)return;if(!
 function subscribeToAssets(uid){ui.assetList.innerHTML='<li>Laster...</li>';AppState.unsubscribeAssets=db.collection('users').doc(uid).collection('assets').orderBy('createdAt','desc').onSnapshot(s=>{ui.assetList.innerHTML='';s.forEach(d=>renderAssetItem(d.data(),d.id));if(s.empty)ui.assetList.innerHTML='<li>Tomt</li>';});}
 function renderAssetItem(a,id){const li=document.createElement('li');li.innerHTML=`<div style="display:flex;align-items:center;flex:1;"><img src="${a.url}" style="width:30px;height:30px;object-fit:contain;background:#222;margin-right:10px"><span style="font-size:13px;">${a.originalName}</span></div><button onclick="deleteAsset('${id}','${a.url}',event)" style="background:none;border:none;color:#ff5555;font-weight:bold;cursor:pointer;">X</button>`;li.onclick=()=>selectAsset(a,id,li);ui.assetList.appendChild(li);}
 function showStatus(m,t){ui.statusMsg.innerText=m;ui.statusMsg.style.color=t==="error"?"red":"green";}
-function transitionToLogin(){ui.editorScreen.classList.add('hidden');ui.loginScreen.classList.remove('hidden');}
 
-/* Version: #16 */
+/* Version: #17 */
