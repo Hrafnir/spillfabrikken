@@ -1,0 +1,267 @@
+/* Version: #1 */
+
+/* === VARIABLES & RESET === */
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-header: #333333;
+    --text-main: #cccccc;
+    --text-light: #ffffff;
+    --accent-color: #007acc;
+    --accent-hover: #005f9e;
+    --border-color: #3e3e42;
+    --danger-color: #d94545;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden; /* Prevent body scroll, handle in panels */
+}
+
+/* === UTILITIES === */
+.hidden {
+    display: none !important;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.primary-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.primary-btn:hover {
+    background-color: var(--accent-hover);
+}
+
+.secondary-btn {
+    background-color: transparent;
+    border: 1px solid var(--text-main);
+    color: var(--text-main);
+}
+
+.small-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: var(--bg-header);
+    color: var(--text-light);
+}
+
+/* === LOGIN SCREEN === */
+#login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.login-box {
+    background-color: var(--bg-panel);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    width: 350px;
+    text-align: center;
+}
+
+.login-box h1 {
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.login-box p {
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+}
+
+#status-msg {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #ffaa00;
+}
+
+/* === EDITOR UI === */
+#editor-ui {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* TOP HEADER */
+#top-bar {
+    height: 50px;
+    background-color: var(--bg-header);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo-area {
+    font-weight: bold;
+    color: var(--text-light);
+}
+
+.project-info {
+    font-size: 14px;
+}
+
+.actions button {
+    margin-left: 10px;
+    background-color: var(--bg-panel);
+    color: var(--text-light);
+}
+
+/* WORKSPACE LAYOUT */
+#workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* SIDE PANELS */
+#left-panel, #right-panel {
+    width: 250px;
+    background-color: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+}
+
+#right-panel {
+    border-right: none;
+    border-left: 1px solid var(--border-color);
+}
+
+.panel-header {
+    padding: 10px;
+    background-color: var(--bg-header);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.panel-content {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+/* CENTER CANVAS AREA */
+#center-panel {
+    flex: 1;
+    background-color: #111; /* Darker background for canvas area */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#viewport-tools {
+    height: 40px;
+    background-color: var(--bg-panel);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tool-btn {
+    background: none;
+    color: var(--text-main);
+    margin-right: 5px;
+}
+
+.tool-btn.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.separator {
+    margin: 0 10px;
+    color: var(--border-color);
+}
+
+#play-test-btn {
+    color: #4cd137;
+    font-weight: bold;
+}
+
+#canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    background-image: 
+        linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+        linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+        linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+#game-canvas {
+    background-color: #000;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    /* Standard 800x600 size rendering */
+}
+
+/* List Views */
+.asset-category h3 {
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: var(--text-light);
+    display: inline-block;
+}
+
+.list-view {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.empty-state {
+    font-style: italic;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Version: #1 */
