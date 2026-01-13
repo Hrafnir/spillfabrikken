@@ -1,4 +1,4 @@
-<!-- Version: #6 -->
+<!-- Version: #7 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -68,7 +68,11 @@
                 <div class="panel-content">
                     <div class="asset-category">
                         <h3>Mine Tegninger</h3>
+                        <!-- Knapp for brukeren -->
                         <button id="upload-asset-btn" class="small-btn">+ Last opp</button>
+                        <!-- Usynlig input som faktisk håndterer filen -->
+                        <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
+                        
                         <ul id="asset-list" class="list-view">
                             <li class="empty-state">Ingen tegninger ennå</li>
                         </ul>
@@ -111,4 +115,4 @@
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #6 -->
+<!-- Version: #7 -->
