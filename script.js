@@ -1,30 +1,39 @@
-/* Version: #6 */
+/* Version: #7 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
     user: null,
     currentProject: null,
-    editorMode: 'edit'
+    editorMode: 'edit',
+    unsubscribeAssets: null // To stop listening when logging out
 };
 
 // === DOM ELEMENTS ===
 const ui = {
+    // Auth screens
     loginScreen: document.getElementById('login-overlay'),
     editorScreen: document.getElementById('editor-ui'),
+    
+    // Auth buttons/inputs
     loginBtn: document.getElementById('login-btn'),
     registerBtn: document.getElementById('register-btn'),
-    googleBtn: document.getElementById('google-btn'), // Ny knapp
+    googleBtn: document.getElementById('google-btn'),
     emailInput: document.getElementById('email-input'),
     passwordInput: document.getElementById('password-input'),
     statusMsg: document.getElementById('status-msg'),
-    logoutBtn: document.getElementById('logout-btn')
+    logoutBtn: document.getElementById('logout-btn'),
+    
+    // Editor elements
+    projectName: document.getElementById('project-name'),
+    uploadBtn: document.getElementById('upload-asset-btn'),
+    fileInput: document.getElementById('asset-file-input'),
+    assetList: document.getElementById('asset-list')
 };
 
 // === INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Script starting...");
     
-    // Sjekk om firebase-config.js har gjort jobben sin
     if (typeof auth === 'undefined') {
         console.error("Critical: 'auth' is missing. Did firebase-config.js load?");
         ui.statusMsg.innerText = "Feil: Systemet lastet ikke korrekt.";
@@ -37,10 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
+    // Auth
     ui.loginBtn.onclick = handleLogin;
     ui.registerBtn.onclick = handleRegister;
-    ui.googleBtn.onclick = handleGoogleLogin; // Ny lytter
+    ui.googleBtn.onclick = handleGoogleLogin;
     ui.logoutBtn.onclick = handleLogout;
+    
+    // Assets
+    ui.uploadBtn.onclick = () => ui.fileInput.click(); // Trigger hidden input
+    ui.fileInput.onchange = handleFileUpload;
 }
 
 function initCanvas() {
@@ -60,17 +74,28 @@ function initCanvas() {
 // === AUTH LOGIC ===
 
 function initAuthListener() {
-    // Vi bruker den globale 'auth' variabelen fra firebase-config.js
     auth.onAuthStateChanged((user) => {
         if (user) {
             console.log("Auth: User detected:", user.email);
             AppState.user = user;
             ui.statusMsg.innerText = "Innlogging vellykket!";
             ui.statusMsg.style.color = "#4cd137";
-            setTimeout(() => transitionToEditor(), 500);
+            
+            setTimeout(() => {
+                transitionToEditor();
+                // Start listening for user's assets
+                subscribeToAssets(user.uid);
+            }, 500);
         } else {
             console.log("Auth: No user signed in.");
             AppState.user = null;
+            
+            // Stop listening to assets
+            if (AppState.unsubscribeAssets) {
+                AppState.unsubscribeAssets();
+                AppState.unsubscribeAssets = null;
+            }
+            
             transitionToLogin();
         }
     });
@@ -79,117 +104,179 @@ function initAuthListener() {
 function handleLogin() {
     const email = ui.emailInput.value;
     const pass = ui.passwordInput.value;
-
-    if (!email || !pass) {
-        showStatus("Fyll inn både e-post og passord.", "error");
-        return;
-    }
-
+    if (!email || !pass) return showStatus("Fyll inn alt.", "error");
+    
     showStatus("Logger inn...", "info");
-
     auth.signInWithEmailAndPassword(email, pass)
-        .catch((error) => {
-            console.error("Login Error:", error);
-            showStatus(oversattFeilmelding(error.code), "error");
-        });
+        .catch(err => showStatus(oversattFeilmelding(err.code), "error"));
 }
 
 function handleRegister() {
     const email = ui.emailInput.value;
     const pass = ui.passwordInput.value;
-
-    if (!email || !pass) {
-        showStatus("Fyll inn e-post og passord.", "error");
-        return;
-    }
-
-    if (pass.length < 6) {
-        showStatus("Passordet må være minst 6 tegn.", "error");
-        return;
-    }
+    if (!email || !pass) return showStatus("Fyll inn alt.", "error");
+    if (pass.length < 6) return showStatus("Passord min 6 tegn.", "error");
 
     showStatus("Oppretter bruker...", "info");
-
     auth.createUserWithEmailAndPassword(email, pass)
-        .then(() => {
-            showStatus("Bruker opprettet! Logger inn...", "success");
-        })
-        .catch((error) => {
-            console.error("Register Error:", error);
-            showStatus(oversattFeilmelding(error.code), "error");
-        });
+        .then(() => showStatus("Bruker opprettet!", "success"))
+        .catch(err => showStatus(oversattFeilmelding(err.code), "error"));
 }
 
 function handleGoogleLogin() {
-    console.log("Action: Google Login initiated.");
-    showStatus("Åpner Google...", "info");
-
-    // Opprett en leverandør for Google
     const provider = new firebase.auth.GoogleAuthProvider();
-
     auth.signInWithPopup(provider)
-        .then((result) => {
-            // Suksess håndteres automatisk av onAuthStateChanged
-            console.log("Google Auth Success:", result.user.email);
-        })
-        .catch((error) => {
-            console.error("Google Auth Error:", error);
-            // Spesifikk håndtering hvis brukeren lukker vinduet
-            if (error.code === 'auth/popup-closed-by-user') {
-                showStatus("Innlogging avbrutt.", "error");
-            } else {
-                showStatus("Feil med Google-innlogging: " + error.message, "error");
+        .catch(err => {
+            if (err.code !== 'auth/popup-closed-by-user') {
+                showStatus("Google feil: " + err.message, "error");
             }
         });
 }
 
 function handleLogout() {
-    auth.signOut().then(() => {
-        console.log("Auth: Signed out.");
-    });
+    auth.signOut();
 }
 
-// Hjelpefunksjoner
-function oversattFeilmelding(errorCode) {
-    switch (errorCode) {
-        case 'auth/invalid-email': return "Ugyldig e-postadresse.";
-        case 'auth/user-disabled': return "Brukeren er deaktivert.";
-        case 'auth/user-not-found': return "Finner ingen bruker med denne e-posten.";
-        case 'auth/wrong-password': return "Feil passord.";
-        case 'auth/email-already-in-use': return "E-posten er allerede i bruk.";
-        case 'auth/weak-password': return "Passordet må være minst 6 tegn.";
-        case 'auth/popup-closed-by-user': return "Du lukket vinduet før innloggingen var ferdig.";
-        default: return "Feil: " + errorCode;
+// === ASSET MANAGEMENT (NYTT) ===
+
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 1. Basic Validation
+    if (!file.type.startsWith('image/')) {
+        alert("Du kan bare laste opp bilder (PNG, JPG, GIF).");
+        return;
     }
+    
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit for now
+        alert("Bildet er for stort! Maks 2MB.");
+        return;
+    }
+
+    console.log(`Assets: Starting upload for ${file.name}`);
+    
+    // Visuell feedback kunne lagt her (loading spinner), men vi tar det enkelt først.
+    
+    const uid = AppState.user.uid;
+    const storageRef = storage.ref().child(`users/${uid}/assets/${Date.now()}_${file.name}`);
+    
+    try {
+        // 2. Upload to Firebase Storage
+        const snapshot = await storageRef.put(file);
+        console.log("Assets: Upload complete. Fetching URL...");
+        
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        // 3. Save reference to Firestore (Database)
+        // Vi lagrer i en under-kolleksjon: users -> [uid] -> assets -> [doc]
+        await db.collection('users').doc(uid).collection('assets').add({
+            originalName: file.name,
+            url: downloadURL,
+            type: file.type,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log("Assets: Metadata saved to database.");
+        
+    } catch (error) {
+        console.error("Assets: Upload failed", error);
+        alert("Kunne ikke laste opp bilde: " + error.message);
+    } finally {
+        // Reset input så man kan laste opp samme fil igjen om man vil
+        ui.fileInput.value = '';
+    }
+}
+
+function subscribeToAssets(uid) {
+    console.log("Assets: Listening for changes in DB...");
+    ui.assetList.innerHTML = '<li class="empty-state">Laster bilder...</li>';
+
+    // Real-time listener
+    AppState.unsubscribeAssets = db.collection('users').doc(uid).collection('assets')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            ui.assetList.innerHTML = ''; // Clear list
+            
+            if (snapshot.empty) {
+                ui.assetList.innerHTML = '<li class="empty-state">Ingen tegninger ennå. Last opp en!</li>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const asset = doc.data();
+                renderAssetItem(asset, doc.id);
+            });
+        }, (error) => {
+            console.error("Assets: Listener error", error);
+            ui.assetList.innerHTML = '<li class="empty-state" style="color:red">Feil ved henting.</li>';
+        });
+}
+
+function renderAssetItem(asset, id) {
+    const li = document.createElement('li');
+    li.style.padding = "5px";
+    li.style.borderBottom = "1px solid #333";
+    li.style.display = "flex";
+    li.style.alignItems = "center";
+    li.style.cursor = "pointer";
+    
+    // Thumbnail
+    const img = document.createElement('img');
+    img.src = asset.url;
+    img.style.width = "40px";
+    img.style.height = "40px";
+    img.style.objectFit = "cover"; // Pass på at bildet ikke strekkes rart
+    img.style.marginRight = "10px";
+    img.style.borderRadius = "4px";
+    img.style.backgroundColor = "#333"; // Bakgrunn hvis transparent PNG
+    
+    // Name
+    const nameSpan = document.createElement('span');
+    nameSpan.innerText = asset.originalName;
+    nameSpan.style.fontSize = "13px";
+    nameSpan.style.overflow = "hidden";
+    nameSpan.style.textOverflow = "ellipsis";
+    nameSpan.style.whiteSpace = "nowrap";
+    
+    li.appendChild(img);
+    li.appendChild(nameSpan);
+    
+    // Click handler for later (View in inspector)
+    li.onclick = () => {
+        console.log("Assets: Selected asset", id);
+        // Her skal vi senere laste bildet inn i editoren
+    };
+
+    ui.assetList.appendChild(li);
+}
+
+// === UTILS ===
+function oversattFeilmelding(code) {
+    if(code === 'auth/wrong-password') return "Feil passord.";
+    if(code === 'auth/user-not-found') return "Ingen bruker funnet.";
+    return code; 
 }
 
 function showStatus(msg, type) {
     ui.statusMsg.innerText = msg;
-    if (type === "error") ui.statusMsg.style.color = "#d94545";
-    else if (type === "success") ui.statusMsg.style.color = "#4cd137";
-    else ui.statusMsg.style.color = "#ffaa00";
+    ui.statusMsg.style.color = type === "error" ? "#d94545" : type === "success" ? "#4cd137" : "#ffaa00";
 }
-
-// === UI TRANSITIONS ===
 
 function transitionToEditor() {
     ui.loginScreen.classList.add('hidden');
     ui.editorScreen.classList.remove('hidden');
-    
-    // Oppdater toppen med brukerens epost
-    const userInfo = document.getElementById('project-name');
     if(AppState.user) {
-        userInfo.innerText = "Logget inn som: " + AppState.user.email;
+        ui.projectName.innerText = AppState.user.email;
     }
 }
 
 function transitionToLogin() {
     ui.editorScreen.classList.add('hidden');
     ui.loginScreen.classList.remove('hidden');
-    
     ui.emailInput.value = '';
     ui.passwordInput.value = '';
     ui.statusMsg.innerText = '';
 }
 
-/* Version: #6 */
+/* Version: #7 */
