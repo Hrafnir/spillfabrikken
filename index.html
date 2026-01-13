@@ -1,4 +1,4 @@
-<!-- Version: #10 -->
+<!-- Version: #11 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -67,7 +67,7 @@
         <!-- MAIN WORKSPACE -->
         <main id="workspace">
             
-            <!-- LEFT PANEL: Nå med BÅDE assets og inspector -->
+            <!-- LEFT PANEL -->
             <aside id="left-panel">
                 
                 <!-- SEKSJON 1: FILER -->
@@ -89,7 +89,6 @@
                 <div class="panel-section-header">Egenskaper</div>
                 <div id="inspector-section" class="panel-content scrollable">
                     <div id="inspector-content">
-                        <!-- Innhold fylles av JS -->
                         <p class="info-text" style="padding: 10px;">Velg en tegning ovenfor for å redigere.</p>
                     </div>
                 </div>
@@ -131,6 +130,26 @@
         </main>
     </div>
 
+    <!-- === PREVIEW MODAL (NYTT) === -->
+    <div id="preview-modal" class="hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Forhåndsvisning</h3>
+                <button id="close-preview-btn" class="icon-btn">✖</button>
+            </div>
+            
+            <div class="preview-area">
+                <!-- Canvas for å spille av animasjonen -->
+                <canvas id="preview-canvas" width="200" height="200"></canvas>
+            </div>
+            
+            <div class="preview-controls">
+                <label>Hastighet (FPS): <span id="fps-display">8</span></label>
+                <input type="range" id="fps-slider" min="1" max="60" value="8">
+            </div>
+        </div>
+    </div>
+
     <!-- 1. Last konfigurasjon først -->
     <script src="firebase-config.js"></script>
     
@@ -138,4 +157,4 @@
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #10 -->
+<!-- Version: #11 -->
