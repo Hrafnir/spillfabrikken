@@ -1,4 +1,4 @@
-<!-- Version: #9 -->
+<!-- Version: #10 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -48,10 +48,15 @@
         
         <!-- TOP TOOLBAR -->
         <header id="top-bar">
-            <div class="logo-area">Motor v0.1</div>
+            <div style="display: flex; align-items: center;">
+                <button id="toggle-sidebar-btn" class="icon-btn" title="Vis/Skjul Meny">☰</button>
+                <div class="logo-area" style="margin-left: 15px;">Motor v0.1</div>
+            </div>
+            
             <div class="project-info">
                 <span id="project-name">Uten Tittel</span>
             </div>
+            
             <div class="actions">
                 <button id="save-btn">Lagre</button>
                 <button id="export-btn">Last ned Spill</button>
@@ -62,20 +67,33 @@
         <!-- MAIN WORKSPACE -->
         <main id="workspace">
             
-            <!-- LEFT PANEL: ASSETS & TOOLS -->
+            <!-- LEFT PANEL: Nå med BÅDE assets og inspector -->
             <aside id="left-panel">
-                <div class="panel-header">Ressurser</div>
-                <div class="panel-content">
-                    <div class="asset-category">
-                        <h3>Mine Tegninger</h3>
-                        <button id="upload-asset-btn" class="small-btn">+ Last opp</button>
-                        <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
-                        
-                        <ul id="asset-list" class="list-view">
-                            <li class="empty-state">Ingen tegninger ennå</li>
-                        </ul>
+                
+                <!-- SEKSJON 1: FILER -->
+                <div class="panel-section-header">
+                    <span>Mine Tegninger</span>
+                    <button id="upload-asset-btn" class="tiny-btn">+ Ny</button>
+                </div>
+                <div id="assets-section" class="panel-content scrollable">
+                    <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
+                    <ul id="asset-list" class="list-view">
+                        <li class="empty-state">Ingen tegninger ennå</li>
+                    </ul>
+                </div>
+
+                <!-- SKILLELINJE -->
+                <div class="panel-divider"></div>
+
+                <!-- SEKSJON 2: EGENSKAPER / ANIMASJON -->
+                <div class="panel-section-header">Egenskaper</div>
+                <div id="inspector-section" class="panel-content scrollable">
+                    <div id="inspector-content">
+                        <!-- Innhold fylles av JS -->
+                        <p class="info-text" style="padding: 10px;">Velg en tegning ovenfor for å redigere.</p>
                     </div>
                 </div>
+
             </aside>
 
             <!-- CENTER PANEL: VIEWPORT / CANVAS -->
@@ -110,17 +128,6 @@
                 </div>
             </section>
 
-            <!-- RIGHT PANEL: INSPECTOR (Denne manglet hos deg!) -->
-            <aside id="right-panel">
-                <div class="panel-header">Egenskaper</div>
-                <div class="panel-content">
-                    <div id="inspector-content">
-                        <!-- Her vil animasjonsgruppene dukke opp via Javascript -->
-                        <p class="info-text">Velg et objekt for å redigere.</p>
-                    </div>
-                </div>
-            </aside>
-
         </main>
     </div>
 
@@ -131,4 +138,4 @@
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #9 -->
+<!-- Version: #10 -->
