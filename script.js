@@ -1,4 +1,4 @@
-/* Version: #5 */
+/* Version: #6 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
@@ -13,6 +13,7 @@ const ui = {
     editorScreen: document.getElementById('editor-ui'),
     loginBtn: document.getElementById('login-btn'),
     registerBtn: document.getElementById('register-btn'),
+    googleBtn: document.getElementById('google-btn'), // Ny knapp
     emailInput: document.getElementById('email-input'),
     passwordInput: document.getElementById('password-input'),
     statusMsg: document.getElementById('status-msg'),
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     ui.loginBtn.onclick = handleLogin;
     ui.registerBtn.onclick = handleRegister;
+    ui.googleBtn.onclick = handleGoogleLogin; // Ny lytter
     ui.logoutBtn.onclick = handleLogout;
 }
 
@@ -118,6 +120,29 @@ function handleRegister() {
         });
 }
 
+function handleGoogleLogin() {
+    console.log("Action: Google Login initiated.");
+    showStatus("Åpner Google...", "info");
+
+    // Opprett en leverandør for Google
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // Suksess håndteres automatisk av onAuthStateChanged
+            console.log("Google Auth Success:", result.user.email);
+        })
+        .catch((error) => {
+            console.error("Google Auth Error:", error);
+            // Spesifikk håndtering hvis brukeren lukker vinduet
+            if (error.code === 'auth/popup-closed-by-user') {
+                showStatus("Innlogging avbrutt.", "error");
+            } else {
+                showStatus("Feil med Google-innlogging: " + error.message, "error");
+            }
+        });
+}
+
 function handleLogout() {
     auth.signOut().then(() => {
         console.log("Auth: Signed out.");
@@ -133,6 +158,7 @@ function oversattFeilmelding(errorCode) {
         case 'auth/wrong-password': return "Feil passord.";
         case 'auth/email-already-in-use': return "E-posten er allerede i bruk.";
         case 'auth/weak-password': return "Passordet må være minst 6 tegn.";
+        case 'auth/popup-closed-by-user': return "Du lukket vinduet før innloggingen var ferdig.";
         default: return "Feil: " + errorCode;
     }
 }
@@ -149,6 +175,12 @@ function showStatus(msg, type) {
 function transitionToEditor() {
     ui.loginScreen.classList.add('hidden');
     ui.editorScreen.classList.remove('hidden');
+    
+    // Oppdater toppen med brukerens epost
+    const userInfo = document.getElementById('project-name');
+    if(AppState.user) {
+        userInfo.innerText = "Logget inn som: " + AppState.user.email;
+    }
 }
 
 function transitionToLogin() {
@@ -160,4 +192,4 @@ function transitionToLogin() {
     ui.statusMsg.innerText = '';
 }
 
-/* Version: #5 */
+/* Version: #6 */
