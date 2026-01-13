@@ -1,4 +1,4 @@
-/* Version: #17 */
+/* Version: #18 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
@@ -149,7 +149,7 @@ function transitionToLogin() {
     ui.loginScreen.classList.remove('hidden');
 }
 
-// === PREVIEW LOGIC ===
+// === PREVIEW LOGIC (OPPDATERT) ===
 window.openPreview = () => {
     const frames = getCurrentFrames();
     if (frames.length === 0) return alert("Ingen frames å spille av. Tegn noen bokser først!");
@@ -193,12 +193,15 @@ function animatePreview(timestamp) {
     const w = ui.previewCanvas.width;
     const h = ui.previewCanvas.height;
     
+    // 1. CLEAR & FILL BACKGROUND (Bruker valgt bakgrunnsfarge)
     ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = AppState.viewport.bgColor;
+    ctx.fillRect(0, 0, w, h);
     
-    // Crosshair
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+    // 2. DRAW GUIDES
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke(); // Vertical
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke(); // Horizontal
     
     const frame = frames[AppState.preview.frameIndex];
     const img = AppState.loadedImage;
@@ -209,16 +212,30 @@ function animatePreview(timestamp) {
         const sw = frame.w;
         const sh = frame.h;
         
-        const anchorX = frame.anchor ? frame.anchor.x : sw/2;
-        const anchorY = frame.anchor ? frame.anchor.y : sh;
+        // --- SKALERINGS-LOGIKK START ---
+        // Vi ønsker at spriten skal fylle max 90% av preview-vinduet
+        // scale = (LerretStørrelse / SpriteStørrelse) * Margin
+        const padding = 0.9;
+        const scaleX = (w * padding) / sw;
+        const scaleY = (h * padding) / sh;
+        const scale = Math.min(scaleX, scaleY); // Velg minste for å beholde forholdet
         
-        const dx = (w / 2) - anchorX;
-        const dy = (h / 2) - anchorY;
+        const dw = sw * scale;
+        const dh = sh * scale;
         
-        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
+        // Sentrer bildet midt i preview-vinduet
+        const dx = (w - dw) / 2;
+        const dy = (h - dh) / 2;
+        // --- SKALERINGS-LOGIKK SLUTT ---
         
+        // Vi bruker imageSmoothingEnabled = false via CSS, men kan sette det her også for sikkerhets skyld
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        
+        // Info text
         ctx.fillStyle = "white";
         ctx.font = "10px Arial";
+        ctx.shadowColor = "black"; ctx.shadowBlur = 2;
         ctx.fillText(`Frame: ${AppState.preview.frameIndex + 1}/${frames.length}`, 5, 15);
     }
     
@@ -491,7 +508,6 @@ function getResizeHandleHover(mx,my,f){const z=AppState.viewport.zoom,m=8;const 
 function setTool(t){AppState.viewport.activeTool=t;if(t==='select'){ui.toolSelect.classList.add('active');ui.toolPan.classList.remove('active');ui.canvas.style.cursor="default";}else{ui.toolSelect.classList.remove('active');ui.toolPan.classList.add('active');ui.canvas.style.cursor="grab";}}
 function handleZoom(a){let z=AppState.viewport.zoom+a;z=Math.max(0.1,Math.min(z,10.0));AppState.viewport.zoom=Math.round(z*10)/10;ui.zoomLabel.innerText=Math.round(z*100)+"%";drawCanvas();}
 
-// Auth Init (Viktig!)
 function initAuthListener(){
     auth.onAuthStateChanged(u=>{
         if(u){
@@ -514,7 +530,4 @@ function handleGoogleLogin(){auth.signInWithPopup(new firebase.auth.GoogleAuthPr
 function handleLogout(){auth.signOut();}
 async function handleFileUpload(ev){const f=ev.target.files[0];if(!f)return;if(!f.type.startsWith('image/'))return alert("Kun bilder");ui.uploadBtn.innerText="...";ui.uploadBtn.disabled=true;const uid=AppState.user.uid, ref=storage.ref().child(`users/${uid}/assets/${Date.now()}_${f.name}`);try{const snap=await ref.put(f),url=await snap.ref.getDownloadURL();await db.collection('users').doc(uid).collection('assets').add({originalName:f.name,url,type:f.type,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){alert(e.message);}finally{ui.fileInput.value='';ui.uploadBtn.innerText="+ Ny";ui.uploadBtn.disabled=false;}}
 function subscribeToAssets(uid){ui.assetList.innerHTML='<li>Laster...</li>';AppState.unsubscribeAssets=db.collection('users').doc(uid).collection('assets').orderBy('createdAt','desc').onSnapshot(s=>{ui.assetList.innerHTML='';s.forEach(d=>renderAssetItem(d.data(),d.id));if(s.empty)ui.assetList.innerHTML='<li>Tomt</li>';});}
-function renderAssetItem(a,id){const li=document.createElement('li');li.innerHTML=`<div style="display:flex;align-items:center;flex:1;"><img src="${a.url}" style="width:30px;height:30px;object-fit:contain;background:#222;margin-right:10px"><span style="font-size:13px;">${a.originalName}</span></div><button onclick="deleteAsset('${id}','${a.url}',event)" style="background:none;border:none;color:#ff5555;font-weight:bold;cursor:pointer;">X</button>`;li.onclick=()=>selectAsset(a,id,li);ui.assetList.appendChild(li);}
-function showStatus(m,t){ui.statusMsg.innerText=m;ui.statusMsg.style.color=t==="error"?"red":"green";}
-
-/* Version: #17 */
+function renderAssetItem(a,id){c
