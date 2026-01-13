@@ -1,4 +1,4 @@
-/* Version: #7 */
+/* Version: #8 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
@@ -149,14 +149,19 @@ async function handleFileUpload(event) {
         return;
     }
     
-    if (file.size > 2 * 1024 * 1024) { // 2MB limit for now
-        alert("Bildet er for stort! Maks 2MB.");
+    // ENDRET: Økt grense fra 2MB til 10MB
+    const MAX_SIZE_MB = 10;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) { 
+        alert(`Bildet er for stort! Maks ${MAX_SIZE_MB}MB.`);
         return;
     }
 
     console.log(`Assets: Starting upload for ${file.name}`);
     
-    // Visuell feedback kunne lagt her (loading spinner), men vi tar det enkelt først.
+    // Visuell feedback
+    const originalText = ui.uploadBtn.innerText;
+    ui.uploadBtn.innerText = "Laster opp...";
+    ui.uploadBtn.disabled = true;
     
     const uid = AppState.user.uid;
     const storageRef = storage.ref().child(`users/${uid}/assets/${Date.now()}_${file.name}`);
@@ -169,7 +174,6 @@ async function handleFileUpload(event) {
         const downloadURL = await snapshot.ref.getDownloadURL();
         
         // 3. Save reference to Firestore (Database)
-        // Vi lagrer i en under-kolleksjon: users -> [uid] -> assets -> [doc]
         await db.collection('users').doc(uid).collection('assets').add({
             originalName: file.name,
             url: downloadURL,
@@ -181,10 +185,16 @@ async function handleFileUpload(event) {
         
     } catch (error) {
         console.error("Assets: Upload failed", error);
-        alert("Kunne ikke laste opp bilde: " + error.message);
+        // Håndter permission errors spesifikt for å hjelpe deg
+        if (error.code === 'storage/unauthorized' || error.code === 'permission-denied') {
+            alert("Mangler tillatelse! Husk å oppdatere 'Rules' i Firebase Console (se instruksjoner).");
+        } else {
+            alert("Kunne ikke laste opp bilde: " + error.message);
+        }
     } finally {
-        // Reset input så man kan laste opp samme fil igjen om man vil
         ui.fileInput.value = '';
+        ui.uploadBtn.innerText = originalText;
+        ui.uploadBtn.disabled = false;
     }
 }
 
@@ -209,7 +219,11 @@ function subscribeToAssets(uid) {
             });
         }, (error) => {
             console.error("Assets: Listener error", error);
-            ui.assetList.innerHTML = '<li class="empty-state" style="color:red">Feil ved henting.</li>';
+            if (error.code === 'permission-denied') {
+                ui.assetList.innerHTML = '<li class="empty-state" style="color:orange">Mangler databasetilgang (Rules).</li>';
+            } else {
+                ui.assetList.innerHTML = '<li class="empty-state" style="color:red">Feil ved henting.</li>';
+            }
         });
 }
 
@@ -220,16 +234,20 @@ function renderAssetItem(asset, id) {
     li.style.display = "flex";
     li.style.alignItems = "center";
     li.style.cursor = "pointer";
+    li.style.transition = "background 0.2s";
+    
+    li.onmouseover = () => li.style.background = "#333";
+    li.onmouseout = () => li.style.background = "transparent";
     
     // Thumbnail
     const img = document.createElement('img');
     img.src = asset.url;
     img.style.width = "40px";
     img.style.height = "40px";
-    img.style.objectFit = "cover"; // Pass på at bildet ikke strekkes rart
+    img.style.objectFit = "contain"; // Endret til contain for å se hele bildet
     img.style.marginRight = "10px";
     img.style.borderRadius = "4px";
-    img.style.backgroundColor = "#333"; // Bakgrunn hvis transparent PNG
+    img.style.backgroundColor = "#222"; 
     
     // Name
     const nameSpan = document.createElement('span');
@@ -242,10 +260,8 @@ function renderAssetItem(asset, id) {
     li.appendChild(img);
     li.appendChild(nameSpan);
     
-    // Click handler for later (View in inspector)
     li.onclick = () => {
         console.log("Assets: Selected asset", id);
-        // Her skal vi senere laste bildet inn i editoren
     };
 
     ui.assetList.appendChild(li);
@@ -279,4 +295,4 @@ function transitionToLogin() {
     ui.statusMsg.innerText = '';
 }
 
-/* Version: #7 */
+/* Version: #8 */
