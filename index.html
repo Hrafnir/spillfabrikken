@@ -1,4 +1,4 @@
-<!-- Version: #2 -->
+<!-- Version: #3 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkoleSpillMotor - Skap ditt eget spill</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- === FIREBASE (KLASSISK IMPORT) === -->
+    <!-- Vi laster disse her oppe så de er klare før scriptet vårt kjører -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -56,7 +63,6 @@
                         <h3>Mine Tegninger</h3>
                         <button id="upload-asset-btn" class="small-btn">+ Last opp</button>
                         <ul id="asset-list" class="list-view">
-                            <!-- Assets vil listes her -->
                             <li class="empty-state">Ingen tegninger ennå</li>
                         </ul>
                     </div>
@@ -74,7 +80,6 @@
                 </div>
                 
                 <div id="canvas-container">
-                    <!-- Her kommer spill-lerretet -->
                     <canvas id="game-canvas" width="800" height="600"></canvas>
                 </div>
             </section>
@@ -92,8 +97,8 @@
         </main>
     </div>
 
-    <!-- Main Script - MERK: type="module" er lagt til for å støtte Firebase import -->
-    <script type="module" src="script.js"></script>
+    <!-- Main Script (Uten type="module") -->
+    <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #2 -->
+<!-- Version: #3 -->
