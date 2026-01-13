@@ -1,4 +1,4 @@
-<!-- Version: #7 -->
+<!-- Version: #8 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -68,9 +68,7 @@
                 <div class="panel-content">
                     <div class="asset-category">
                         <h3>Mine Tegninger</h3>
-                        <!-- Knapp for brukeren -->
                         <button id="upload-asset-btn" class="small-btn">+ Last opp</button>
-                        <!-- Usynlig input som faktisk håndterer filen -->
                         <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
                         
                         <ul id="asset-list" class="list-view">
@@ -82,11 +80,31 @@
 
             <!-- CENTER PANEL: VIEWPORT / CANVAS -->
             <section id="center-panel">
+                <!-- Verktøylinje for viewporten -->
                 <div id="viewport-tools">
-                    <button class="tool-btn active">Velg</button>
-                    <button class="tool-btn">Tegn</button>
-                    <button class="tool-btn">Viskelær</button>
+                    <!-- Venstre: Verktøy -->
+                    <div style="display: flex; align-items: center;">
+                        <button class="tool-btn active" id="tool-select" title="Velg (V)">Velg</button>
+                        <button class="tool-btn" id="tool-pan" title="Hånd (Space)">Hånd</button>
+                    </div>
+
                     <span class="separator">|</span>
+
+                    <!-- Midten: Zoom og Visning -->
+                    <div style="display: flex; align-items: center;">
+                        <button class="tool-btn" id="zoom-out-btn" title="Zoom ut">-</button>
+                        <span id="zoom-level" style="font-size: 12px; margin: 0 8px; color: #888; min-width: 40px; text-align: center;">100%</span>
+                        <button class="tool-btn" id="zoom-in-btn" title="Zoom inn">+</button>
+                        
+                        <span class="separator"></span>
+                        
+                        <label for="bg-color-picker" style="font-size: 12px; color: #888; margin-right: 5px;">Bakgrunn:</label>
+                        <input type="color" id="bg-color-picker" value="#222222" style="border: none; width: 25px; height: 25px; cursor: pointer; background: none;">
+                    </div>
+
+                    <span class="separator" style="flex: 1;"></span> <!-- Spacer push right -->
+
+                    <!-- Høyre: Spillknapp -->
                     <button class="tool-btn" id="play-test-btn">▶ Spill</button>
                 </div>
                 
@@ -115,4 +133,4 @@
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #7 -->
+<!-- Version: #8 -->
