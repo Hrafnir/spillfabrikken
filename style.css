@@ -1,4 +1,4 @@
-/* Version: #3 */
+/* Version: #4 */
 
 /* === VARIABLES & RESET === */
 :root {
@@ -24,8 +24,27 @@ body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh;
 button { cursor: pointer; border: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; transition: background 0.2s; }
 .primary-btn { background-color: var(--accent-color); color: white; flex: 1; }
 .secondary-btn { background-color: transparent; border: 1px solid var(--text-main); color: var(--text-main); flex: 1; }
+
 .small-btn { padding: 4px 8px; font-size: 12px; background-color: var(--bg-header); color: var(--text-light); border: 1px solid var(--border-color); }
 .small-btn:hover { background-color: #444; }
+
+.tiny-btn {
+    padding: 2px 8px;
+    font-size: 11px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 3px;
+}
+.tiny-btn:hover { background-color: var(--accent-hover); }
+
+.icon-btn {
+    background: transparent;
+    color: #ccc;
+    font-size: 18px;
+    padding: 5px 10px;
+    margin-right: 10px;
+}
+.icon-btn:hover { color: white; background-color: rgba(255,255,255,0.1); }
 
 /* === LOGIN SCREEN === */
 #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -38,52 +57,16 @@ button { cursor: pointer; border: none; padding: 8px 16px; border-radius: 4px; f
 /* === EDITOR UI === */
 #editor-ui { display: flex; flex-direction: column; height: 100vh; }
 
-#top-bar { height: 50px; background-color: var(--bg-header); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+#top-bar { height: 50px; background-color: var(--bg-header); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
 .logo-area { color: white; font-weight: bold; }
 
 /* WORKSPACE */
 #workspace { flex: 1; display: flex; overflow: hidden; }
 
-/* PANELS (VIKTIG: min-width sikrer at de ikke forsvinner) */
-#left-panel, #right-panel {
-    width: 260px;
-    min-width: 260px; /* HINDRE KOLLAPS */
+/* LEFT PANEL (Nå med animasjon og split layout) */
+#left-panel {
+    width: 300px; /* Litt bredere enn før */
     background-color: var(--bg-panel);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--border-color);
-    flex-shrink: 0; /* IKKE KRYMP */
-}
-
-#right-panel {
-    border-right: none;
-    border-left: 1px solid var(--border-color);
-}
-
-.panel-header { padding: 10px; background-color: var(--bg-header); font-weight: bold; font-size: 12px; text-transform: uppercase; color: white; }
-.panel-content { flex: 1; padding: 10px; overflow-y: auto; }
-
-/* CENTER */
-#center-panel { flex: 1; display: flex; flex-direction: column; background-color: #111; position: relative; min-width: 0; } /* min-width 0 fix flexbox overflow */
-
-#viewport-tools { height: 40px; background-color: var(--bg-panel); display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border-color); }
-.tool-btn { background: none; color: #ccc; margin-right: 5px; }
-.tool-btn.active { background-color: var(--accent-color); color: white; }
-.separator { width: 1px; height: 20px; background-color: #444; margin: 0 10px; }
-
-#canvas-container { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
-
-/* Inspector Items */
-.inspector-section { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-.inspector-label { font-size: 10px; color: #888; margin-bottom: 5px; display: block; text-transform: uppercase; }
-.anim-row { display: flex; gap: 5px; margin-bottom: 10px; }
-.anim-select { flex: 1; background: #333; color: white; border: 1px solid #444; padding: 5px; }
-
-/* List Items */
-#asset-list li, #frame-list li {
-    padding: 6px; border-bottom: 1px solid #333; display: flex; align-items: center; cursor: pointer;
-}
-#asset-list li:hover, #frame-list li:hover { background-color: #333; }
-.selected-item { background-color: var(--accent-color) !important; color: white; }
-
-/* Version: #3 */
+    border-right: 1px solid var(--bo
