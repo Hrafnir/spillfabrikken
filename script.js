@@ -1,4 +1,4 @@
-/* Version: #18 */
+/* Version: #19 */
 
 // === GLOBAL APP STATE ===
 const AppState = {
@@ -66,6 +66,7 @@ const ui = {
     closePreviewBtn: document.getElementById('close-preview-btn'),
     fpsSlider: document.getElementById('fps-slider'),
     fpsDisplay: document.getElementById('fps-display'),
+    downloadGifBtn: document.getElementById('download-gif-btn'), // NY
     
     // Tools
     toolSelect: document.getElementById('tool-select'),
@@ -101,6 +102,7 @@ function setupEventListeners() {
 
     // Preview
     ui.closePreviewBtn.onclick = closePreview;
+    ui.downloadGifBtn.onclick = createGif; // NY
     ui.fpsSlider.oninput = (e) => {
         const fps = parseInt(e.target.value);
         ui.fpsDisplay.innerText = fps;
@@ -149,7 +151,7 @@ function transitionToLogin() {
     ui.loginScreen.classList.remove('hidden');
 }
 
-// === PREVIEW LOGIC (OPPDATERT) ===
+// === PREVIEW LOGIC ===
 window.openPreview = () => {
     const frames = getCurrentFrames();
     if (frames.length === 0) return alert("Ingen frames å spille av. Tegn noen bokser først!");
@@ -193,15 +195,16 @@ function animatePreview(timestamp) {
     const w = ui.previewCanvas.width;
     const h = ui.previewCanvas.height;
     
-    // 1. CLEAR & FILL BACKGROUND (Bruker valgt bakgrunnsfarge)
     ctx.clearRect(0, 0, w, h);
+    
+    // Background based on editor setting
     ctx.fillStyle = AppState.viewport.bgColor;
     ctx.fillRect(0, 0, w, h);
     
-    // 2. DRAW GUIDES
+    // Guides
     ctx.strokeStyle = "rgba(255,255,255,0.2)";
-    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke(); // Vertical
-    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke(); // Horizontal
+    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
     
     const frame = frames[AppState.preview.frameIndex];
     const img = AppState.loadedImage;
@@ -212,35 +215,127 @@ function animatePreview(timestamp) {
         const sw = frame.w;
         const sh = frame.h;
         
-        // --- SKALERINGS-LOGIKK START ---
-        // Vi ønsker at spriten skal fylle max 90% av preview-vinduet
-        // scale = (LerretStørrelse / SpriteStørrelse) * Margin
+        // Scale to fit preview window
         const padding = 0.9;
         const scaleX = (w * padding) / sw;
         const scaleY = (h * padding) / sh;
-        const scale = Math.min(scaleX, scaleY); // Velg minste for å beholde forholdet
+        const scale = Math.min(scaleX, scaleY);
         
         const dw = sw * scale;
         const dh = sh * scale;
         
-        // Sentrer bildet midt i preview-vinduet
-        const dx = (w - dw) / 2;
-        const dy = (h - dh) / 2;
-        // --- SKALERINGS-LOGIKK SLUTT ---
+        // Center
+        const anchorX = frame.anchor ? frame.anchor.x : sw/2;
+        const anchorY = frame.anchor ? frame.anchor.y : sh;
         
-        // Vi bruker imageSmoothingEnabled = false via CSS, men kan sette det her også for sikkerhets skyld
+        // Calculate offset to center based on anchor
+        // We want (Anchor) to appear at (Canvas Center)
+        // DrawPos = Center - (Anchor * Scale)
+        const dx = (w/2) - (anchorX * scale);
+        const dy = (h/2) - (anchorY * scale);
+
+        // Adjust for sprite drawing: we draw top-left of sprite relative to drawPos
+        // Wait, standard drawImage takes top-left dest X/Y.
+        // If we want Anchor at Center:
+        // DestX = CenterX - (AnchorX * Scale)
+        // DestY = CenterY - (AnchorY * Scale)
+        // But drawImage draws the whole w/h from that point? No.
+        // drawImage draws (sx,sy,sw,sh) INTO (dx,dy,dw,dh).
+        // Correct logic: Center the *visual* anchor.
+        
+        // Simple centering for preview (ignoring anchor for fit-to-box logic, using box center)
+        // Let's use simple center-of-box centering for preview so it looks nice
+        const simpleDx = (w - dw) / 2;
+        const simpleDy = (h - dh) / 2;
+
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        ctx.drawImage(img, sx, sy, sw, sh, simpleDx, simpleDy, dw, dh);
         
-        // Info text
         ctx.fillStyle = "white";
         ctx.font = "10px Arial";
         ctx.shadowColor = "black"; ctx.shadowBlur = 2;
-        ctx.fillText(`Frame: ${AppState.preview.frameIndex + 1}/${frames.length}`, 5, 15);
+        ctx.fillText(`F: ${AppState.preview.frameIndex + 1}/${frames.length}`, 5, 15);
     }
     
     requestAnimationFrame(animatePreview);
 }
+
+// === GIF GENERATION (NYTT) ===
+async function createGif() {
+    const animData = getCurrentAnimData();
+    const frames = animData.frames;
+    if (frames.length === 0) return;
+
+    const originalText = ui.downloadGifBtn.innerText;
+    ui.downloadGifBtn.innerText = "Genererer GIF...";
+    ui.downloadGifBtn.disabled = true;
+
+    try {
+        // 1. Fetch worker code to create Blob URL (Bypasses CORS for CDN workers)
+        const workerResponse = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+        const workerBlob = await workerResponse.blob();
+        const workerUrl = URL.createObjectURL(workerBlob);
+
+        // 2. Setup GIF Encoder
+        const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            workerScript: workerUrl,
+            background: AppState.viewport.bgColor, // Use Editor background color
+            width: frames[0].w, // Use size of first frame (assume same size for now)
+            height: frames[0].h
+        });
+
+        // 3. Add Frames
+        const img = AppState.loadedImage;
+        const fps = animData.fps || 8;
+        const delay = 1000 / fps;
+
+        frames.forEach(f => {
+            // Create a temporary canvas for this frame
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = f.w;
+            tCanvas.height = f.h;
+            const tCtx = tCanvas.getContext('2d');
+            
+            // Fill background
+            tCtx.fillStyle = AppState.viewport.bgColor;
+            tCtx.fillRect(0, 0, f.w, f.h);
+            
+            // Draw sprite part
+            tCtx.drawImage(img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+            
+            // Add to GIF
+            gif.addFrame(tCanvas, {delay: delay});
+        });
+
+        // 4. Render & Download
+        gif.on('finished', function(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${AppState.selectedAsset.data.originalName}_${AppState.currentAnimName}.gif`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            ui.downloadGifBtn.innerText = "Lastet ned!";
+            setTimeout(() => {
+                ui.downloadGifBtn.innerText = originalText;
+                ui.downloadGifBtn.disabled = false;
+            }, 2000);
+        });
+
+        gif.render();
+
+    } catch (error) {
+        console.error("GIF Error:", error);
+        alert("Feil under generering av GIF: " + error.message);
+        ui.downloadGifBtn.innerText = originalText;
+        ui.downloadGifBtn.disabled = false;
+    }
+}
+
 
 // === DATA MANAGEMENT ===
 function getCurrentAnimData() {
@@ -259,7 +354,6 @@ async function saveCurrentWork() {
     if (!AppState.selectedAsset) return alert("Ingen fil valgt.");
     const docId = AppState.selectedAsset.id;
     ui.saveBtn.innerText = "Lagrer..."; ui.saveBtn.disabled = true;
-
     try {
         await db.collection('users').doc(AppState.user.uid)
             .collection('assets').doc(docId)
@@ -513,7 +607,6 @@ function initAuthListener(){
         if(u){
             AppState.user=u;
             ui.statusMsg.innerText="Klar";
-            // VIKTIG: Kalle transitionToEditor HER
             setTimeout(()=>{
                 transitionToEditor();
                 subscribeToAssets(u.uid);
@@ -533,4 +626,4 @@ function subscribeToAssets(uid){ui.assetList.innerHTML='<li>Laster...</li>';AppS
 function renderAssetItem(a,id){const li=document.createElement('li');li.innerHTML=`<div style="display:flex;align-items:center;flex:1;"><img src="${a.url}" style="width:30px;height:30px;object-fit:contain;background:#222;margin-right:10px"><span style="font-size:13px;">${a.originalName}</span></div><button onclick="deleteAsset('${id}','${a.url}',event)" style="background:none;border:none;color:#ff5555;font-weight:bold;cursor:pointer;">X</button>`;li.onclick=()=>selectAsset(a,id,li);ui.assetList.appendChild(li);}
 function showStatus(m,t){ui.statusMsg.innerText=m;ui.statusMsg.style.color=t==="error"?"red":"green";}
 
-/* Version: #18 */
+/* Version: #19 */
