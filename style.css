@@ -1,4 +1,4 @@
-/* Version: #1 */
+/* Version: #2 */
 
 /* === VARIABLES & RESET === */
 :root {
@@ -11,6 +11,7 @@
     --accent-hover: #005f9e;
     --border-color: #3e3e42;
     --danger-color: #d94545;
+    --google-red: #DB4437; /* Google Brand Color */
 }
 
 * {
@@ -24,7 +25,7 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     height: 100vh;
-    overflow: hidden; /* Prevent body scroll, handle in panels */
+    overflow: hidden;
 }
 
 /* === UTILITIES === */
@@ -38,12 +39,17 @@ button {
     padding: 8px 16px;
     border-radius: 4px;
     font-size: 14px;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.98);
 }
 
 .primary-btn {
     background-color: var(--accent-color);
     color: white;
+    flex: 1; /* Make buttons grow evenly in flex container */
 }
 
 .primary-btn:hover {
@@ -54,6 +60,11 @@ button {
     background-color: transparent;
     border: 1px solid var(--text-main);
     color: var(--text-main);
+    flex: 1;
+}
+
+.secondary-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .small-btn {
@@ -108,10 +119,61 @@ button {
     color: var(--text-light);
 }
 
+.input-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* Button Row for Login/Register */
+.btn-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* Divider (- eller -) */
+.divider {
+    margin: 20px 0;
+    position: relative;
+    text-align: center;
+}
+
+.divider span {
+    background-color: var(--bg-panel);
+    padding: 0 10px;
+    color: #666;
+    font-size: 12px;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--border-color);
+    z-index: -1;
+}
+
+/* Google Button */
+.google-btn {
+    width: 100%;
+    background-color: var(--google-red);
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.google-btn:hover {
+    background-color: #c53929;
+}
+
 #status-msg {
     margin-top: 15px;
     font-size: 12px;
     color: #ffaa00;
+    min-height: 18px; /* Prevent jumping when text appears */
 }
 
 /* === EDITOR UI === */
@@ -145,6 +207,10 @@ button {
     margin-left: 10px;
     background-color: var(--bg-panel);
     color: var(--text-light);
+}
+
+.actions button:hover {
+    background-color: #444;
 }
 
 /* WORKSPACE LAYOUT */
@@ -186,7 +252,7 @@ button {
 /* CENTER CANVAS AREA */
 #center-panel {
     flex: 1;
-    background-color: #111; /* Darker background for canvas area */
+    background-color: #111;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -205,6 +271,10 @@ button {
     background: none;
     color: var(--text-main);
     margin-right: 5px;
+}
+
+.tool-btn:hover {
+    background-color: rgba(255,255,255,0.1);
 }
 
 .tool-btn.active {
@@ -240,7 +310,6 @@ button {
 #game-canvas {
     background-color: #000;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    /* Standard 800x600 size rendering */
 }
 
 /* List Views */
@@ -264,4 +333,4 @@ button {
     padding: 20px 0;
 }
 
-/* Version: #1 */
+/* Version: #2 */
