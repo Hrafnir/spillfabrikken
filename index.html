@@ -1,4 +1,4 @@
-<!-- Version: #12 -->
+<!-- Version: #13 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -23,47 +23,38 @@
         <div class="login-box">
             <h1>Spillmotor</h1>
             <p>Logg inn for å lage spill</p>
-            
-            <div class="input-group">
-                <input type="email" id="email-input" placeholder="E-post">
-            </div>
-            <div class="input-group">
-                <input type="password" id="password-input" placeholder="Passord">
-            </div>
-            
+            <div class="input-group"><input type="email" id="email-input" placeholder="E-post"></div>
+            <div class="input-group"><input type="password" id="password-input" placeholder="Passord"></div>
             <div class="btn-row">
                 <button id="login-btn" class="primary-btn">Logg Inn</button>
                 <button id="register-btn" class="secondary-btn">Ny Bruker</button>
             </div>
-
-            <div class="divider">
-                <span>- eller -</span>
-            </div>
-
+            <div class="divider"><span>- eller -</span></div>
             <button id="google-btn" class="google-btn">Logg inn med Google</button>
-            
             <p id="status-msg"></p>
         </div>
     </div>
 
-    <!-- === MAIN EDITOR UI (Hidden by default) === -->
+    <!-- === MAIN EDITOR UI === -->
     <div id="editor-ui" class="hidden">
         
         <!-- TOP TOOLBAR -->
         <header id="top-bar">
-            <div style="display: flex; align-items: center;">
-                <button id="toggle-sidebar-btn" class="icon-btn" title="Vis/Skjul Meny">☰</button>
-                <div class="logo-area" style="margin-left: 15px;">Motor v0.1</div>
+            <div style="display: flex; align-items: center; width: 200px;">
+                <button id="toggle-sidebar-btn" class="icon-btn">☰</button>
+                <div class="logo-area">Motor v0.2</div>
             </div>
             
-            <div class="project-info">
-                <span id="project-name">Uten Tittel</span>
+            <!-- MODE SWITCHER (CENTER) -->
+            <div class="mode-switcher">
+                <button id="mode-asset-btn" class="mode-btn active">1. Tegn & Animer</button>
+                <button id="mode-level-btn" class="mode-btn">2. Bygg Brett</button>
             </div>
             
-            <div class="actions">
+            <div class="actions" style="width: 200px; justify-content: flex-end;">
+                <span id="project-name" style="font-size: 10px; margin-right: 10px; color: #666;">...</span>
                 <button id="save-btn">Lagre</button>
-                <button id="export-btn">Last ned Spill</button>
-                <button id="logout-btn">Logg ut</button>
+                <button id="export-btn">Spill</button>
             </div>
         </header>
 
@@ -73,56 +64,57 @@
             <!-- LEFT PANEL -->
             <aside id="left-panel">
                 
-                <!-- SEKSJON 1: FILER -->
+                <!-- SEKSJON 1: RESSURSER (Palette) -->
                 <div class="panel-section-header">
-                    <span>Mine Tegninger</span>
+                    <span id="panel-title-assets">Mine Tegninger</span>
                     <button id="upload-asset-btn" class="tiny-btn">+ Ny</button>
                 </div>
+                
                 <div id="assets-section" class="panel-content scrollable">
                     <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
-                    <ul id="asset-list" class="list-view">
-                        <li class="empty-state">Ingen tegninger ennå</li>
-                    </ul>
+                    <!-- Her kommer kategoriene -->
                 </div>
 
-                <!-- SKILLELINJE -->
                 <div class="panel-divider"></div>
 
-                <!-- SEKSJON 2: EGENSKAPER / ANIMASJON -->
+                <!-- SEKSJON 2: EGENSKAPER (Context sensitive) -->
                 <div class="panel-section-header">Egenskaper</div>
                 <div id="inspector-section" class="panel-content scrollable">
                     <div id="inspector-content">
-                        <p class="info-text" style="padding: 10px;">Velg en tegning ovenfor for å redigere.</p>
+                        <p class="info-text" style="padding:10px;">Laster...</p>
                     </div>
                 </div>
 
             </aside>
 
-            <!-- CENTER PANEL: VIEWPORT / CANVAS -->
+            <!-- CENTER PANEL -->
             <section id="center-panel">
-                <!-- Verktøylinje for viewporten -->
                 <div id="viewport-tools">
+                    <!-- Standard Tools -->
                     <div style="display: flex; align-items: center;">
                         <button class="tool-btn active" id="tool-select" title="Velg (V)">Velg</button>
                         <button class="tool-btn" id="tool-pan" title="Hånd (Space)">Hånd</button>
+                        
+                        <!-- Level Tools (Hidden in Asset Mode) -->
+                        <span class="separator level-only hidden">|</span>
+                        <button class="tool-btn level-only hidden" id="tool-brush" title="Tegn (B)">Tegn</button>
+                        <button class="tool-btn level-only hidden" id="tool-eraser" title="Viskelær (E)">Slett</button>
                     </div>
 
                     <span class="separator">|</span>
 
                     <div style="display: flex; align-items: center;">
-                        <button class="tool-btn" id="zoom-out-btn" title="Zoom ut">-</button>
-                        <span id="zoom-level" style="font-size: 12px; margin: 0 8px; color: #888; min-width: 40px; text-align: center;">100%</span>
-                        <button class="tool-btn" id="zoom-in-btn" title="Zoom inn">+</button>
-                        
+                        <button class="tool-btn" id="zoom-out-btn">-</button>
+                        <span id="zoom-level" style="font-size: 12px; margin: 0 8px; color: #888; min-width: 35px; text-align: center;">100%</span>
+                        <button class="tool-btn" id="zoom-in-btn">+</button>
                         <span class="separator"></span>
-                        
-                        <label for="bg-color-picker" style="font-size: 12px; color: #888; margin-right: 5px;">Bakgrunn:</label>
-                        <input type="color" id="bg-color-picker" value="#222222" style="border: none; width: 25px; height: 25px; cursor: pointer; background: none;">
+                        <input type="color" id="bg-color-picker" value="#222222" style="border: none; width: 20px; height: 20px; cursor: pointer; background: none;">
                     </div>
-
+                    
                     <span class="separator" style="flex: 1;"></span>
-
-                    <button class="tool-btn" id="play-test-btn">▶ Spill</button>
+                    
+                    <!-- Grid Toggle -->
+                    <button class="tool-btn level-only hidden" id="toggle-grid-btn" style="color: #4cd137;">#</button>
                 </div>
                 
                 <div id="canvas-container">
@@ -133,34 +125,25 @@
         </main>
     </div>
 
-    <!-- === PREVIEW MODAL === -->
+    <!-- PREVIEW MODAL -->
     <div id="preview-modal" class="hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Forhåndsvisning</h3>
                 <button id="close-preview-btn" class="icon-btn">✖</button>
             </div>
-            
-            <div class="preview-area">
-                <canvas id="preview-canvas" width="200" height="200"></canvas>
-            </div>
-            
+            <div class="preview-area"><canvas id="preview-canvas" width="200" height="200"></canvas></div>
             <div class="preview-controls">
-                <label>Hastighet (FPS): <span id="fps-display">8</span></label>
+                <label>FPS: <span id="fps-display">8</span></label>
                 <input type="range" id="fps-slider" min="1" max="60" value="8">
-                
                 <hr style="border: 0; border-top: 1px solid #444; margin: 15px 0;">
-                
                 <button id="download-gif-btn" class="primary-btn" style="width: 100%;">Last ned som GIF</button>
             </div>
         </div>
     </div>
 
-    <!-- 1. Last konfigurasjon først -->
     <script src="firebase-config.js"></script>
-    
-    <!-- 2. Last hovedscriptet etterpå -->
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #12 -->
+<!-- Version: #13 -->
