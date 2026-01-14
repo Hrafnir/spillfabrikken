@@ -1,4 +1,4 @@
-<!-- Version: #13 -->
+<!-- Version: #14 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -23,29 +23,40 @@
         <div class="login-box">
             <h1>Spillmotor</h1>
             <p>Logg inn for å lage spill</p>
-            <div class="input-group"><input type="email" id="email-input" placeholder="E-post"></div>
-            <div class="input-group"><input type="password" id="password-input" placeholder="Passord"></div>
+            
+            <div class="input-group">
+                <input type="email" id="email-input" placeholder="E-post">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password-input" placeholder="Passord">
+            </div>
+            
             <div class="btn-row">
                 <button id="login-btn" class="primary-btn">Logg Inn</button>
                 <button id="register-btn" class="secondary-btn">Ny Bruker</button>
             </div>
-            <div class="divider"><span>- eller -</span></div>
+
+            <div class="divider">
+                <span>- eller -</span>
+            </div>
+
             <button id="google-btn" class="google-btn">Logg inn med Google</button>
+            
             <p id="status-msg"></p>
         </div>
     </div>
 
-    <!-- === MAIN EDITOR UI === -->
+    <!-- === MAIN EDITOR UI (Hidden by default) === -->
     <div id="editor-ui" class="hidden">
         
         <!-- TOP TOOLBAR -->
         <header id="top-bar">
             <div style="display: flex; align-items: center; width: 200px;">
-                <button id="toggle-sidebar-btn" class="icon-btn">☰</button>
-                <div class="logo-area">Motor v0.2</div>
+                <button id="toggle-sidebar-btn" class="icon-btn" title="Meny">☰</button>
+                <div class="logo-area" style="margin-left: 15px;">Motor v0.2</div>
             </div>
             
-            <!-- MODE SWITCHER (CENTER) -->
+            <!-- MODE SWITCHER -->
             <div class="mode-switcher">
                 <button id="mode-asset-btn" class="mode-btn active">1. Tegn & Animer</button>
                 <button id="mode-level-btn" class="mode-btn">2. Bygg Brett</button>
@@ -55,6 +66,7 @@
                 <span id="project-name" style="font-size: 10px; margin-right: 10px; color: #666;">...</span>
                 <button id="save-btn">Lagre</button>
                 <button id="export-btn">Spill</button>
+                <button id="logout-btn">Logg ut</button>
             </div>
         </header>
 
@@ -64,7 +76,7 @@
             <!-- LEFT PANEL -->
             <aside id="left-panel">
                 
-                <!-- SEKSJON 1: RESSURSER (Palette) -->
+                <!-- SEKSJON 1: RESSURSER -->
                 <div class="panel-section-header">
                     <span id="panel-title-assets">Mine Tegninger</span>
                     <button id="upload-asset-btn" class="tiny-btn">+ Ny</button>
@@ -72,12 +84,12 @@
                 
                 <div id="assets-section" class="panel-content scrollable">
                     <input type="file" id="asset-file-input" class="hidden" accept="image/png, image/jpeg, image/gif">
-                    <!-- Her kommer kategoriene -->
+                    <!-- Kategorier genereres her av JS -->
                 </div>
 
                 <div class="panel-divider"></div>
 
-                <!-- SEKSJON 2: EGENSKAPER (Context sensitive) -->
+                <!-- SEKSJON 2: INSPECTOR -->
                 <div class="panel-section-header">Egenskaper</div>
                 <div id="inspector-section" class="panel-content scrollable">
                     <div id="inspector-content">
@@ -90,12 +102,11 @@
             <!-- CENTER PANEL -->
             <section id="center-panel">
                 <div id="viewport-tools">
-                    <!-- Standard Tools -->
+                    <!-- Tools -->
                     <div style="display: flex; align-items: center;">
                         <button class="tool-btn active" id="tool-select" title="Velg (V)">Velg</button>
                         <button class="tool-btn" id="tool-pan" title="Hånd (Space)">Hånd</button>
                         
-                        <!-- Level Tools (Hidden in Asset Mode) -->
                         <span class="separator level-only hidden">|</span>
                         <button class="tool-btn level-only hidden" id="tool-brush" title="Tegn (B)">Tegn</button>
                         <button class="tool-btn level-only hidden" id="tool-eraser" title="Viskelær (E)">Slett</button>
@@ -103,6 +114,7 @@
 
                     <span class="separator">|</span>
 
+                    <!-- Zoom & View -->
                     <div style="display: flex; align-items: center;">
                         <button class="tool-btn" id="zoom-out-btn">-</button>
                         <span id="zoom-level" style="font-size: 12px; margin: 0 8px; color: #888; min-width: 35px; text-align: center;">100%</span>
@@ -113,8 +125,9 @@
                     
                     <span class="separator" style="flex: 1;"></span>
                     
-                    <!-- Grid Toggle -->
+                    <!-- Level Grid Toggle -->
                     <button class="tool-btn level-only hidden" id="toggle-grid-btn" style="color: #4cd137;">#</button>
+                    <button class="tool-btn" id="play-test-btn" style="margin-left: 10px;">▶ Spill</button>
                 </div>
                 
                 <div id="canvas-container">
@@ -142,8 +155,9 @@
         </div>
     </div>
 
+    <!-- Script Loads -->
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Version: #13 -->
+<!-- Version: #14 -->
